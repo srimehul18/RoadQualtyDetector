@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "888748404741",
+    "project_id": "road-quality-detection-app",
+    "storage_bucket": "road-quality-detection-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:888748404741:android:79b5ff65cf227f8f666c6c",
+        "android_client_info": {
+          "package_name": "com.example.roadqualitydetectionapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD_TmO6IsGpNCceYUTdR9UhR_4D8cMR_7s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
