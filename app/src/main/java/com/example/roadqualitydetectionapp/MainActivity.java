@@ -87,7 +87,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-        databaseRef = FirebaseDatabase.getInstance().getReference("road_data");
+        databaseRef = FirebaseDatabase.getInstance().getReference("road_data_v2");
 
         DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
         NavigationView navView = findViewById(R.id.nav_view);
@@ -143,7 +143,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         "\nMagnitude: " + magnitude
         );
 
-        if (magnitude > 13 && System.currentTimeMillis() - lastUploadTime > 2000) {
+        if (magnitude > 13.3 && System.currentTimeMillis() - lastUploadTime > 2000) {
 
             lastUploadTime = System.currentTimeMillis();
 

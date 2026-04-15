@@ -1,11 +1,14 @@
 package com.example.roadqualitydetectionapp;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.widget.Button;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.google.android.material.navigation.NavigationView;
@@ -21,10 +24,14 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+
 public class MapActivity extends AppCompatActivity {
 
     private MapView map;
     private DatabaseReference databaseRef;
+    private FusedLocationProviderClient fusedLocationClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,8 +46,44 @@ public class MapActivity extends AppCompatActivity {
         map.setTileSource(org.osmdroid.tileprovider.tilesource.TileSourceFactory.MAPNIK);
 
         map.getController().setZoom(15.0);
+
+        // Default fallback (Delhi)
         GeoPoint startPoint = new GeoPoint(28.6139, 77.2090);
         map.getController().setCenter(startPoint);
+
+        // ✅ Location setup
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+        // 🔥 AUTO CENTER TO USER LOCATION
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+
+        } else {
+
+            fusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
+
+                if (location != null) {
+
+                    double lat = location.getLatitude();
+                    double lng = location.getLongitude();
+
+                    GeoPoint userPoint = new GeoPoint(lat, lng);
+
+                    map.getController().setZoom(17.0);
+                    map.getController().setCenter(userPoint);
+
+                    // ✅ Add user marker
+                    Marker userMarker = new Marker(map);
+                    userMarker.setPosition(userPoint);
+                    userMarker.setTitle("📍 You are here");
+
+                    map.getOverlays().add(userMarker);
+                }
+            });
+        }
 
         // ✅ Drawer setup
         DrawerLayout drawerLayout = findViewById(R.id.drawer_layout_map);
@@ -50,7 +93,7 @@ public class MapActivity extends AppCompatActivity {
         navView.inflateMenu(R.menu.menu_drawer);
 
         menuBtnMap.setOnClickListener(v -> {
-            drawerLayout.openDrawer(Gravity.LEFT); // ✅ FIXED
+            drawerLayout.openDrawer(Gravity.LEFT);
         });
 
         navView.setNavigationItemSelectedListener(item -> {
@@ -64,7 +107,7 @@ public class MapActivity extends AppCompatActivity {
         });
 
         // 🔥 Firebase
-        databaseRef = FirebaseDatabase.getInstance().getReference("road_data");
+        databaseRef = FirebaseDatabase.getInstance().getReference("road_data_v2");
 
         databaseRef.addValueEventListener(new ValueEventListener() {
             @Override
@@ -79,7 +122,7 @@ public class MapActivity extends AppCompatActivity {
                     Double mag = data.child("mag").getValue(Double.class);
 
                     if (lat == null || lng == null || mag == null) continue;
-                    if (mag < 13) continue; // ✅ threshold
+                    if (mag < 13.3) continue; // ✅ updated threshold
 
                     GeoPoint point = new GeoPoint(lat, lng);
 
@@ -97,9 +140,7 @@ public class MapActivity extends AppCompatActivity {
                         icon = ContextCompat.getDrawable(MapActivity.this, R.drawable.marker_yellow);
                     }
 
-                    // ✅ FIX: resize icon (VERY IMPORTANT)
                     marker.setIcon(resizeDrawable(icon, 80, 80));
-
                     map.getOverlays().add(marker);
                 }
 
@@ -111,7 +152,7 @@ public class MapActivity extends AppCompatActivity {
         });
     }
 
-    // ✅ FUNCTION TO RESIZE ICON (FIXES GIANT MARKER ISSUE)
+    // ✅ Resize marker icons
     private Drawable resizeDrawable(Drawable image, int width, int height) {
         Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);

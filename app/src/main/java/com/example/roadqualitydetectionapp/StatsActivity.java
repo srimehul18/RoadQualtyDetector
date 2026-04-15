@@ -66,7 +66,7 @@ public class StatsActivity extends AppCompatActivity {
         });
 
         // 🔥 Firebase
-        databaseRef = FirebaseDatabase.getInstance().getReference("road_data");
+        databaseRef = FirebaseDatabase.getInstance().getReference("road_data_v2");
 
         databaseRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
