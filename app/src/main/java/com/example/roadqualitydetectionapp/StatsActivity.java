@@ -12,11 +12,11 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.database.*;
 
-import java.util.HashMap;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.data.*;
-import com.github.mikephil.charting.utils.ColorTemplate;
+
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class StatsActivity extends AppCompatActivity {
 
@@ -29,23 +29,19 @@ public class StatsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_stats);
 
-        // ✅ UI
         totalText = findViewById(R.id.totalText);
         dangerText = findViewById(R.id.dangerText);
         moderateText = findViewById(R.id.moderateText);
         roadsText = findViewById(R.id.roadsText);
         pieChart = findViewById(R.id.pieChart);
 
-        // ✅ Drawer
         DrawerLayout drawerLayout = findViewById(R.id.drawer_layout_stats);
         NavigationView navView = findViewById(R.id.nav_view_stats);
         Button menuBtn = findViewById(R.id.menuBtnStats);
 
         navView.inflateMenu(R.menu.menu_drawer);
 
-        menuBtn.setOnClickListener(v -> {
-            drawerLayout.openDrawer(Gravity.LEFT);
-        });
+        menuBtn.setOnClickListener(v -> drawerLayout.openDrawer(Gravity.LEFT));
 
         navView.setNavigationItemSelectedListener(item -> {
 
@@ -57,8 +53,8 @@ public class StatsActivity extends AppCompatActivity {
             else if (id == R.id.nav_map) {
                 startActivity(new Intent(StatsActivity.this, MapActivity.class));
             }
-            else if (id == R.id.nav_stats) {
-                // already here
+            else if (id == R.id.nav_performance) {
+                startActivity(new Intent(StatsActivity.this, PerformanceActivity.class));
             }
 
             drawerLayout.closeDrawers();
@@ -78,26 +74,23 @@ public class StatsActivity extends AppCompatActivity {
 
                 HashMap<String, Integer> roadCount = new HashMap<>();
 
-                // ✅ FIRST: calculate values
                 for (DataSnapshot data : snapshot.getChildren()) {
 
                     Double mag = data.child("mag").getValue(Double.class);
                     String road = data.child("road").getValue(String.class);
 
-                    if (mag == null) continue;
+                    if (mag == null || road == null) continue;
 
                     total++;
 
                     if (mag >= 16) dangerous++;
-                    else if (mag >= 13) moderate++;
+                    else if (mag >= 13.3) moderate++;
 
-                    if (road != null) {
-                        int count = roadCount.containsKey(road) ? roadCount.get(road) : 0;
-                        roadCount.put(road, count + 1);
-                    }
+                    int count = roadCount.containsKey(road) ? roadCount.get(road) : 0;
+                    roadCount.put(road, count + 1);
                 }
 
-                // ✅ THEN: create chart using REAL values
+                // 📊 PIE CHART
                 ArrayList<PieEntry> entries = new ArrayList<>();
 
                 if (dangerous > 0)
@@ -109,8 +102,8 @@ public class StatsActivity extends AppCompatActivity {
                 PieDataSet dataSet = new PieDataSet(entries, "");
 
                 dataSet.setColors(
-                        0xFFE53935, // red
-                        0xFFFFC107  // yellow
+                        0xFFE53935,
+                        0xFFFFC107
                 );
 
                 dataSet.setValueTextColor(0xFFFFFFFF);
@@ -119,44 +112,34 @@ public class StatsActivity extends AppCompatActivity {
                 PieData pieData = new PieData(dataSet);
 
                 pieChart.setData(pieData);
-
                 pieChart.setUsePercentValues(false);
                 pieChart.setDrawHoleEnabled(false);
                 pieChart.setEntryLabelColor(0xFFFFFFFF);
                 pieChart.setEntryLabelTextSize(12f);
-
                 pieChart.getDescription().setEnabled(false);
                 pieChart.getLegend().setTextColor(0xFFFFFFFF);
+                pieChart.invalidate();
 
-                pieChart.invalidate(); // 🔥 refresh
-
-                // ✅ TEXT UI
+                // 📊 COUNTERS
                 totalText.setText(String.valueOf(total));
                 dangerText.setText(String.valueOf(dangerous));
                 moderateText.setText(String.valueOf(moderate));
 
+                // 🔝 TOP 5 ROADS ONLY
                 ArrayList<HashMap.Entry<String, Integer>> list =
                         new ArrayList<>(roadCount.entrySet());
 
-// 🔥 sort descending
                 list.sort((a, b) -> b.getValue() - a.getValue());
 
-// 🔥 build top 5
                 StringBuilder builder = new StringBuilder();
-
-                builder.append("Top 5 Worst Roads:\n\n");
 
                 int limit = Math.min(5, list.size());
 
                 for (int i = 0; i < limit; i++) {
-
-                    String road = list.get(i).getKey();
-                    int count = list.get(i).getValue();
-
-                    builder.append((i + 1) + ". ")
-                            .append(road)
+                    builder.append((i + 1)).append(". ")
+                            .append(list.get(i).getKey())
                             .append(" → ")
-                            .append(count)
+                            .append(list.get(i).getValue())
                             .append("\n");
                 }
 

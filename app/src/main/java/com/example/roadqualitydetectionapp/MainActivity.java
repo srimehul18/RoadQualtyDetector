@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private long lastUploadTime = 0;
 
-    // 🌍 Get road name from OSM
+
     private String getRoadNameFromOSM(double lat, double lng) {
         try {
             String urlStr = "https://nominatim.openstreetmap.org/reverse?format=json&lat="

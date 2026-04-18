@@ -11,5 +11,8 @@
     <item
         android:id="@+id/nav_stats"
         android:title="Stats"/>
+    <item
+        android:id="@+id/nav_performance"
+        android:title="Performance"/>
 
 </menu>
