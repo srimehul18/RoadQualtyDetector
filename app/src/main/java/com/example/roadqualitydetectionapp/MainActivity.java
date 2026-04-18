@@ -1,5 +1,5 @@
 package com.example.roadqualitydetectionapp;
-
+import android.view.Gravity.*;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -15,6 +15,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -30,6 +31,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Scanner;
+import android.content.Intent;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
@@ -91,22 +93,28 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
         NavigationView navView = findViewById(R.id.nav_view);
+        navView.setCheckedItem(R.id.nav_dashboard);
         Button menuBtn = findViewById(R.id.menuBtn);
 
         navView.inflateMenu(R.menu.menu_drawer);
 
-        menuBtn.setOnClickListener(v -> drawerLayout.openDrawer(Gravity.LEFT));
+        menuBtn.setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.START));
 
         navView.setNavigationItemSelectedListener(item -> {
 
             int id = item.getItemId();
 
-            if (id == R.id.nav_map) {
-                startActivity(new Intent(MainActivity.this, MapActivity.class));
+            if (id == R.id.nav_dashboard) {
+                startActivity(new Intent(this, MainActivity.class));
             }
-
-            if (id == R.id.nav_stats) {
-                startActivity(new Intent(MainActivity.this, StatsActivity.class));
+            else if (id == R.id.nav_map) {
+                startActivity(new Intent(this, MapActivity.class));
+            }
+            else if (id == R.id.nav_stats) {
+                startActivity(new Intent(this, StatsActivity.class));
+            }
+            else if (id == R.id.nav_performance) {
+                startActivity(new Intent(this, PerformanceActivity.class));
             }
 
             drawerLayout.closeDrawers();

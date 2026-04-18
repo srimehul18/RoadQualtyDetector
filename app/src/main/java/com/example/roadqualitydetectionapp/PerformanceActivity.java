@@ -14,6 +14,8 @@ import com.google.firebase.database.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import android.view.View;
+import android.content.Intent;
 
 public class PerformanceActivity extends AppCompatActivity {
 
@@ -41,6 +43,7 @@ public class PerformanceActivity extends AppCompatActivity {
 
         DrawerLayout drawerLayout = findViewById(R.id.drawer_layout_stats);
         NavigationView navView = findViewById(R.id.nav_view_stats);
+        navView.setCheckedItem(R.id.nav_performance);
         Button menuBtn = findViewById(R.id.menuBtnStats);
 
         // FILTER BUTTONS
@@ -71,17 +74,24 @@ public class PerformanceActivity extends AppCompatActivity {
 
         navView.inflateMenu(R.menu.menu_drawer);
 
-        menuBtn.setOnClickListener(v -> drawerLayout.openDrawer(Gravity.START));
+        menuBtn.setOnClickListener(v -> drawerLayout.openDrawer(Gravity.LEFT));
 
         navView.setNavigationItemSelectedListener(item -> {
 
             int id = item.getItemId();
 
-            if (id == R.id.nav_dashboard) finish();
-            else if (id == R.id.nav_map)
-                startActivity(new android.content.Intent(this, MapActivity.class));
-            else if (id == R.id.nav_stats)
-                startActivity(new android.content.Intent(this, StatsActivity.class));
+            if (id == R.id.nav_dashboard) {
+                startActivity(new Intent(this, MainActivity.class));
+            }
+            else if (id == R.id.nav_map) {
+                startActivity(new Intent(this, MapActivity.class));
+            }
+            else if (id == R.id.nav_stats) {
+                startActivity(new Intent(this, StatsActivity.class));
+            }
+            else if (id == R.id.nav_performance) {
+                startActivity(new Intent(this, PerformanceActivity.class));
+            }
 
             drawerLayout.closeDrawers();
             return true;
@@ -138,7 +148,26 @@ public class PerformanceActivity extends AppCompatActivity {
 
         container.removeAllViews();
 
-        for (String road : currentData.keySet()) {
+        // ✅ STEP 1: CREATE ROAD LIST
+        ArrayList<String> roads = new ArrayList<>(currentData.keySet());
+
+        // ✅ STEP 2: SORT (WORST FIRST)
+        roads.sort((a, b) -> {
+
+            double currentA = getAverage(currentData.get(a));
+            double prevA = getAverage(previousData.getOrDefault(a, new ArrayList<>()));
+
+            double currentB = getAverage(currentData.get(b));
+            double prevB = getAverage(previousData.getOrDefault(b, new ArrayList<>()));
+
+            double diffA = currentA - prevA;
+            double diffB = currentB - prevB;
+
+            return Double.compare(diffB, diffA); // descending
+        });
+
+        // ✅ STEP 3: LOOP THROUGH SORTED LIST
+        for (String road : roads) {
 
             double currentAvg = getAverage(currentData.get(road));
             double prevAvg = getAverage(
@@ -162,31 +191,69 @@ public class PerformanceActivity extends AppCompatActivity {
                 color = 0xFFFBBF24;
             }
 
-            // 🔥 FILTER LOGIC
+            // ✅ STEP 4: FILTER LOGIC
             if (!currentFilter.equals("All") && !status.equals(currentFilter)) {
                 continue;
             }
 
-            TextView card = new TextView(this);
-            card.setText(
-                    road +
-                            "\nPrev: " + String.format("%.2f", prevAvg) +
-                            " → Now: " + String.format("%.2f", currentAvg) +
-                            "\nStatus: " + status
-            );
+            // 🔥 CARD CONTAINER
+            LinearLayout card = new LinearLayout(this);
+            card.setOrientation(LinearLayout.HORIZONTAL);
+            card.setPadding(20, 20, 20, 20);
+            card.setBackgroundResource(R.drawable.card_bg);
+            card.setElevation(8f); // 🔥 shadow
 
-            card.setTextColor(0xFFFFFFFF);
-            card.setPadding(30, 30, 30, 30);
-            card.setBackgroundColor(0xFF111827);
-
-            LinearLayout.LayoutParams params =
+            LinearLayout.LayoutParams cardParams =
                     new LinearLayout.LayoutParams(
                             LinearLayout.LayoutParams.MATCH_PARENT,
                             LinearLayout.LayoutParams.WRAP_CONTENT
                     );
+            cardParams.setMargins(0, 0, 0, 24);
+            card.setLayoutParams(cardParams);
 
-            params.setMargins(0, 0, 0, 20);
-            card.setLayoutParams(params);
+            // 🔴 LEFT BAR
+            View statusBar = new View(this);
+            LinearLayout.LayoutParams barParams =
+                    new LinearLayout.LayoutParams(12,
+                            LinearLayout.LayoutParams.MATCH_PARENT);
+            barParams.setMargins(0, 0, 20, 0);
+            statusBar.setLayoutParams(barParams);
+            statusBar.setBackgroundColor(color);
+
+            // 📄 CONTENT
+            LinearLayout content = new LinearLayout(this);
+            content.setOrientation(LinearLayout.VERTICAL);
+
+            // 🛣 ROAD NAME
+            TextView roadName = new TextView(this);
+            roadName.setText(road);
+            roadName.setTextColor(0xFFFFFFFF);
+            roadName.setTextSize(16f);
+            roadName.setTypeface(null, android.graphics.Typeface.BOLD);
+
+            // 📊 VALUES
+            TextView details = new TextView(this);
+            details.setText(
+                    "Prev: " + String.format("%.2f", prevAvg) +
+                            " → Now: " + String.format("%.2f", currentAvg)
+            );
+            details.setTextColor(0xFF9CA3AF);
+            details.setTextSize(13f);
+
+            // 📍 STATUS
+            TextView statusText = new TextView(this);
+            statusText.setText("Status: " + status);
+            statusText.setTextColor(color);
+            statusText.setTextSize(14f);
+
+            // ADD CONTENT
+            content.addView(roadName);
+            content.addView(details);
+            content.addView(statusText);
+
+            // FINAL COMBINE
+            card.addView(statusBar);
+            card.addView(content);
 
             container.addView(card);
         }

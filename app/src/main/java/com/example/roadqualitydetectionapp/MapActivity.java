@@ -26,6 +26,7 @@ import android.graphics.drawable.BitmapDrawable;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import android.content.Intent;
 
 public class MapActivity extends AppCompatActivity {
 
@@ -88,9 +89,10 @@ public class MapActivity extends AppCompatActivity {
         // ✅ Drawer setup
         DrawerLayout drawerLayout = findViewById(R.id.drawer_layout_map);
         NavigationView navView = findViewById(R.id.nav_view_map);
+        navView.setCheckedItem(R.id.nav_map);
         Button menuBtnMap = findViewById(R.id.menuBtnMap);
 
-        navView.inflateMenu(R.menu.menu_drawer);
+
 
         menuBtnMap.setOnClickListener(v -> {
             drawerLayout.openDrawer(Gravity.LEFT);
@@ -98,8 +100,19 @@ public class MapActivity extends AppCompatActivity {
 
         navView.setNavigationItemSelectedListener(item -> {
 
-            if (item.getItemId() == R.id.nav_dashboard) {
-                finish();
+            int id = item.getItemId();
+
+            if (id == R.id.nav_dashboard) {
+                startActivity(new Intent(this, MainActivity.class));
+            }
+            else if (id == R.id.nav_map) {
+                startActivity(new Intent(this, MapActivity.class));
+            }
+            else if (id == R.id.nav_stats) {
+                startActivity(new Intent(this, StatsActivity.class));
+            }
+            else if (id == R.id.nav_performance) {
+                startActivity(new Intent(this, PerformanceActivity.class));
             }
 
             drawerLayout.closeDrawers();
@@ -152,7 +165,6 @@ public class MapActivity extends AppCompatActivity {
         });
     }
 
-    // ✅ Resize marker icons
     private Drawable resizeDrawable(Drawable image, int width, int height) {
         Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
