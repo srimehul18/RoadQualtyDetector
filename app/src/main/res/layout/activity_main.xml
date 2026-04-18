@@ -7,13 +7,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- 🔥 MAIN VERTICAL LAYOUT -->
+    <!-- MAIN -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:background="#0B1220">
 
-        <!-- 🔥 SCROLL CONTENT -->
+        <!-- SCROLL -->
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="0dp"
@@ -25,9 +26,9 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:padding="16dp"
-                android:paddingBottom="80dp">  <!-- 🔥 IMPORTANT -->
+                android:paddingBottom="120dp"> <!-- 🔥 IMPORTANT -->
 
-                <!-- MENU BUTTON -->
+                <!-- MENU -->
                 <Button
                     android:id="@+id/menuBtn"
                     android:layout_width="wrap_content"
@@ -36,31 +37,64 @@
                     android:backgroundTint="#7C3AED"
                     android:textColor="#FFFFFF"/>
 
-                <!-- STATUS -->
-                <TextView
-                    android:id="@+id/status"
-                    android:layout_width="wrap_content"
+                <!-- STATUS CARD -->
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Status: Normal"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
-                    android:textColor="#22C55E"
-                    android:layout_marginTop="16dp"/>
+                    android:orientation="vertical"
+                    android:background="@drawable/card_bg"
+                    android:padding="20dp"
+                    android:layout_marginTop="20dp">
 
-                <!-- DATA -->
-                <TextView
-                    android:id="@+id/data"
-                    android:layout_width="wrap_content"
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Road Status"
+                        android:textColor="#9CA3AF"
+                        android:textSize="14sp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/status"
+                        android:text="Normal"
+                        android:textColor="#22C55E"
+                        android:textSize="22sp"
+                        android:textStyle="bold"
+                        android:layout_marginTop="6dp"/>
+                </LinearLayout>
+
+                <!-- SENSOR CARD -->
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Sensor Data"
-                    android:textColor="#444444"
-                    android:layout_marginTop="10dp"/>
+                    android:orientation="vertical"
+                    android:background="@drawable/card_bg"
+                    android:padding="20dp"
+                    android:layout_marginTop="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Sensor Data"
+                        android:textColor="#9CA3AF"
+                        android:textSize="14sp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/data"
+                        android:text="X: 0\nY: 0\nZ: 0\nMagnitude: 0"
+                        android:textColor="#D1D5DB"
+                        android:textSize="16sp"
+                        android:layout_marginTop="6dp"/>
+                </LinearLayout>
 
             </LinearLayout>
 
         </ScrollView>
 
-        <!-- 🔥 FIXED BOTTOM NAV -->
+        <!-- 🔥 BOTTOM NAV -->
         <com.google.android.material.bottomnavigation.BottomNavigationView
             android:id="@+id/bottomNavigation"
             android:layout_width="match_parent"
@@ -69,13 +103,12 @@
 
             app:itemIconTint="@android:color/white"
             app:itemTextColor="@android:color/white"
-
             app:labelVisibilityMode="labeled"
             app:menu="@menu/bottom_nav_menu"/>
 
     </LinearLayout>
 
-    <!-- 🔥 SIDEBAR -->
+    <!-- DRAWER -->
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/nav_view"
         android:layout_width="250dp"

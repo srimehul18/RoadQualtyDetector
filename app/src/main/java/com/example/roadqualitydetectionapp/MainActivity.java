@@ -8,7 +8,6 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
-import android.view.Gravity;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -87,6 +86,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 
+        if (accelerometer == null) {
+            dataText.setText("No accelerometer found!");
+        }
+
         // 🔹 Location + Firebase
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         databaseRef = FirebaseDatabase.getInstance().getReference("road_data_v2");
@@ -97,7 +100,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         Button menuBtn = findViewById(R.id.menuBtn);
 
         navView.setCheckedItem(R.id.nav_dashboard);
-        navView.inflateMenu(R.menu.menu_drawer);
 
         menuBtn.setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.START));
 
@@ -120,14 +122,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             return true;
         });
 
-        // 🔥 BOTTOM NAVIGATION (FIXED)
+        // 🔹 Bottom Nav
         BottomNavigationView bottomNav = findViewById(R.id.bottomNavigation);
-
-        // highlight current tab
         bottomNav.setSelectedItemId(R.id.nav_dashboard);
-
-        // 🔥 DEBUG TEST (REMOVE LATER)
-        // bottomNav.setBackgroundColor(0xFFFF0000);
 
         bottomNav.setOnItemSelectedListener(item -> {
 
@@ -151,7 +148,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     @Override
     protected void onResume() {
         super.onResume();
-        sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+
+        if (accelerometer != null) {
+            sensorManager.registerListener(
+                    this,
+                    accelerometer,
+                    SensorManager.SENSOR_DELAY_UI   // 🔥 smoother updates
+            );
+        }
     }
 
     @Override
@@ -169,61 +173,25 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         double magnitude = Math.sqrt(x * x + y * y + z * z);
 
-        dataText.setText(
-                "X: " + x +
-                        "\nY: " + y +
-                        "\nZ: " + z +
-                        "\nMagnitude: " + magnitude
-        );
+        // 🔥 ALWAYS UPDATE UI
+        String sensorText =
+                "X: " + String.format("%.2f", x) +
+                        "\nY: " + String.format("%.2f", y) +
+                        "\nZ: " + String.format("%.2f", z) +
+                        "\nMagnitude: " + String.format("%.2f", magnitude);
 
+        dataText.setText(sensorText);
+
+        // 🔥 DETECTION
         if (magnitude > 13.3 && System.currentTimeMillis() - lastUploadTime > 2000) {
 
             lastUploadTime = System.currentTimeMillis();
 
-            statusText.setText("⚠️ Rough Road Detected!");
+            statusText.setText("Rough Road Detected");
             statusText.setTextColor(0xFFEF4444);
 
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                    != PackageManager.PERMISSION_GRANTED) {
-
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
-                return;
-            }
-
-            fusedLocationClient.getCurrentLocation(
-                    com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY,
-                    null
-            ).addOnSuccessListener(location -> {
-
-                if (location != null) {
-
-                    double lat = location.getLatitude();
-                    double lng = location.getLongitude();
-
-                    new Thread(() -> {
-
-                        String roadName = getRoadNameFromOSM(lat, lng);
-                        long timestamp = System.currentTimeMillis();
-
-                        HashMap<String, Object> data = new HashMap<>();
-                        data.put("lat", lat);
-                        data.put("lng", lng);
-                        data.put("mag", magnitude);
-                        data.put("time", timestamp);
-                        data.put("road", roadName);
-
-                        databaseRef.push().setValue(data);
-
-                    }).start();
-
-                } else {
-                    dataText.setText("Location not available...");
-                }
-            });
-
         } else {
-            statusText.setText("Status: Normal");
+            statusText.setText("Normal");
             statusText.setTextColor(0xFF22C55E);
         }
     }

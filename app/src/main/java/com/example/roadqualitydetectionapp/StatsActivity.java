@@ -43,7 +43,7 @@ public class StatsActivity extends AppCompatActivity {
         NavigationView navView = findViewById(R.id.nav_view_stats);
         Button menuBtn = findViewById(R.id.menuBtnStats);
 
-        navView.inflateMenu(R.menu.menu_drawer);
+
         navView.setCheckedItem(R.id.nav_stats);
 
         menuBtn.setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.START));
