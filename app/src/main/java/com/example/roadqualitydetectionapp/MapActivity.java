@@ -1,16 +1,24 @@
 package com.example.roadqualitydetectionapp;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.view.Gravity;
 import android.widget.Button;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.database.*;
 
@@ -19,20 +27,13 @@ import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
 
-import android.graphics.drawable.Drawable;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.drawable.BitmapDrawable;
-
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationServices;
-import android.content.Intent;
-
 public class MapActivity extends AppCompatActivity {
 
     private MapView map;
     private DatabaseReference databaseRef;
     private FusedLocationProviderClient fusedLocationClient;
+
+    private Marker userMarker; // 🔥 keep reference
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,21 +42,18 @@ public class MapActivity extends AppCompatActivity {
         Configuration.getInstance().setUserAgentValue(getPackageName());
         setContentView(R.layout.activity_map);
 
-        // ✅ Map setup
+        // 🔹 Map setup
         map = findViewById(R.id.map);
         map.setMultiTouchControls(true);
         map.setTileSource(org.osmdroid.tileprovider.tilesource.TileSourceFactory.MAPNIK);
-
         map.getController().setZoom(15.0);
 
-        // Default fallback (Delhi)
         GeoPoint startPoint = new GeoPoint(28.6139, 77.2090);
         map.getController().setCenter(startPoint);
 
-        // ✅ Location setup
+        // 🔹 Location
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
-        // 🔥 AUTO CENTER TO USER LOCATION
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
 
@@ -63,21 +61,19 @@ public class MapActivity extends AppCompatActivity {
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
 
         } else {
-
             fusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
 
                 if (location != null) {
 
-                    double lat = location.getLatitude();
-                    double lng = location.getLongitude();
-
-                    GeoPoint userPoint = new GeoPoint(lat, lng);
+                    GeoPoint userPoint = new GeoPoint(
+                            location.getLatitude(),
+                            location.getLongitude()
+                    );
 
                     map.getController().setZoom(17.0);
                     map.getController().setCenter(userPoint);
 
-                    // ✅ Add user marker
-                    Marker userMarker = new Marker(map);
+                    userMarker = new Marker(map);
                     userMarker.setPosition(userPoint);
                     userMarker.setTitle("📍 You are here");
 
@@ -86,40 +82,58 @@ public class MapActivity extends AppCompatActivity {
             });
         }
 
-        // ✅ Drawer setup
+        // 🔹 Drawer
         DrawerLayout drawerLayout = findViewById(R.id.drawer_layout_map);
         NavigationView navView = findViewById(R.id.nav_view_map);
-        navView.setCheckedItem(R.id.nav_map);
         Button menuBtnMap = findViewById(R.id.menuBtnMap);
 
+        navView.setCheckedItem(R.id.nav_map);
 
-
-        menuBtnMap.setOnClickListener(v -> {
-            drawerLayout.openDrawer(Gravity.LEFT);
-        });
+        menuBtnMap.setOnClickListener(v ->
+                drawerLayout.openDrawer(GravityCompat.START)
+        );
 
         navView.setNavigationItemSelectedListener(item -> {
 
             int id = item.getItemId();
 
-            if (id == R.id.nav_dashboard) {
+            if (id == R.id.nav_dashboard)
                 startActivity(new Intent(this, MainActivity.class));
-            }
-            else if (id == R.id.nav_map) {
-                startActivity(new Intent(this, MapActivity.class));
-            }
-            else if (id == R.id.nav_stats) {
+
+            else if (id == R.id.nav_stats)
                 startActivity(new Intent(this, StatsActivity.class));
-            }
-            else if (id == R.id.nav_performance) {
+
+            else if (id == R.id.nav_performance)
                 startActivity(new Intent(this, PerformanceActivity.class));
-            }
 
             drawerLayout.closeDrawers();
             return true;
         });
 
-        // 🔥 Firebase
+        // 🔥 Bottom Navigation
+        BottomNavigationView bottomNav = findViewById(R.id.bottomNavigation);
+
+        bottomNav.setSelectedItemId(R.id.nav_map); // ✅ highlight current
+
+        bottomNav.setOnItemSelectedListener(item -> {
+
+            int id = item.getItemId();
+
+            if (id == R.id.nav_map) return true;
+
+            else if (id == R.id.nav_dashboard)
+                startActivity(new Intent(this, MainActivity.class));
+
+            else if (id == R.id.nav_stats)
+                startActivity(new Intent(this, StatsActivity.class));
+
+            else if (id == R.id.nav_performance)
+                startActivity(new Intent(this, PerformanceActivity.class));
+
+            return true;
+        });
+
+        // 🔹 Firebase
         databaseRef = FirebaseDatabase.getInstance().getReference("road_data_v2");
 
         databaseRef.addValueEventListener(new ValueEventListener() {
@@ -128,6 +142,11 @@ public class MapActivity extends AppCompatActivity {
 
                 map.getOverlays().clear();
 
+                // 🔥 re-add user marker
+                if (userMarker != null) {
+                    map.getOverlays().add(userMarker);
+                }
+
                 for (DataSnapshot data : snapshot.getChildren()) {
 
                     Double lat = data.child("lat").getValue(Double.class);
@@ -135,7 +154,7 @@ public class MapActivity extends AppCompatActivity {
                     Double mag = data.child("mag").getValue(Double.class);
 
                     if (lat == null || lng == null || mag == null) continue;
-                    if (mag < 13.3) continue; // ✅ updated threshold
+                    if (mag < 13.3) continue;
 
                     GeoPoint point = new GeoPoint(lat, lng);
 
@@ -144,12 +163,11 @@ public class MapActivity extends AppCompatActivity {
 
                     Drawable icon;
 
-                    // 🎯 COLOR LOGIC
                     if (mag >= 16) {
                         marker.setTitle("🔴 Dangerous pothole");
                         icon = ContextCompat.getDrawable(MapActivity.this, R.drawable.marker_red);
                     } else {
-                        marker.setTitle("🟡 Minor bump");
+                        marker.setTitle("🟡 Moderate bump");
                         icon = ContextCompat.getDrawable(MapActivity.this, R.drawable.marker_yellow);
                     }
 

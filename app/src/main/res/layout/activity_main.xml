@@ -1,47 +1,86 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <androidx.drawerlayout.widget.DrawerLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- MAIN CONTENT -->
+    <!-- 🔥 MAIN VERTICAL LAYOUT -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:orientation="vertical">
 
-        <!-- MENU BUTTON -->
-        <Button
-            android:id="@+id/menuBtn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="☰ Menu"/>
+        <!-- 🔥 SCROLL CONTENT -->
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:fillViewport="true">
 
-        <TextView
-            android:id="@+id/status"
-            android:text="Status"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"/>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:paddingBottom="80dp">  <!-- 🔥 IMPORTANT -->
 
-        <TextView
-            android:id="@+id/data"
-            android:text="Data"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"/>
+                <!-- MENU BUTTON -->
+                <Button
+                    android:id="@+id/menuBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="☰ Menu"
+                    android:backgroundTint="#7C3AED"
+                    android:textColor="#FFFFFF"/>
+
+                <!-- STATUS -->
+                <TextView
+                    android:id="@+id/status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Status: Normal"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="#22C55E"
+                    android:layout_marginTop="16dp"/>
+
+                <!-- DATA -->
+                <TextView
+                    android:id="@+id/data"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Sensor Data"
+                    android:textColor="#444444"
+                    android:layout_marginTop="10dp"/>
+
+            </LinearLayout>
+
+        </ScrollView>
+
+        <!-- 🔥 FIXED BOTTOM NAV -->
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottomNavigation"
+            android:layout_width="match_parent"
+            android:layout_height="110dp"
+            android:background="#111827"
+
+            app:itemIconTint="@android:color/white"
+            app:itemTextColor="@android:color/white"
+
+            app:labelVisibilityMode="labeled"
+            app:menu="@menu/bottom_nav_menu"/>
 
     </LinearLayout>
 
-    <!-- SIDEBAR -->
+    <!-- 🔥 SIDEBAR -->
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/nav_view"
         android:layout_width="250dp"
         android:layout_height="match_parent"
-        android:layout_gravity="start"/>
+        android:layout_gravity="start"
+        app:menu="@menu/menu_drawer"/>
 
 </androidx.drawerlayout.widget.DrawerLayout>

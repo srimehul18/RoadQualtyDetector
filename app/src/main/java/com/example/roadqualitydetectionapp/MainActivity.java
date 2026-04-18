@@ -1,5 +1,5 @@
 package com.example.roadqualitydetectionapp;
-import android.view.Gravity.*;
+
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -23,15 +23,15 @@ import com.google.android.gms.location.LocationServices;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.android.material.navigation.NavigationView;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.HashMap;
+import java.util.Scanner;
 
 import org.json.JSONObject;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Scanner;
-import android.content.Intent;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
@@ -45,7 +45,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private long lastUploadTime = 0;
 
-
+    // 🔥 Reverse geocoding
     private String getRoadNameFromOSM(double lat, double lng) {
         try {
             String urlStr = "https://nominatim.openstreetmap.org/reverse?format=json&lat="
@@ -64,11 +64,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             JSONObject json = new JSONObject(response);
             JSONObject address = json.getJSONObject("address");
 
-            if (address.has("road")) {
-                return address.getString("road");
-            } else if (address.has("suburb")) {
-                return address.getString("suburb");
-            }
+            if (address.has("road")) return address.getString("road");
+            else if (address.has("suburb")) return address.getString("suburb");
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -82,20 +79,24 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // 🔹 UI
         statusText = findViewById(R.id.status);
         dataText = findViewById(R.id.data);
 
+        // 🔹 Sensors
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 
+        // 🔹 Location + Firebase
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         databaseRef = FirebaseDatabase.getInstance().getReference("road_data_v2");
 
+        // 🔹 Drawer
         DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
         NavigationView navView = findViewById(R.id.nav_view);
-        navView.setCheckedItem(R.id.nav_dashboard);
         Button menuBtn = findViewById(R.id.menuBtn);
 
+        navView.setCheckedItem(R.id.nav_dashboard);
         navView.inflateMenu(R.menu.menu_drawer);
 
         menuBtn.setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.START));
@@ -104,20 +105,45 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
             int id = item.getItemId();
 
-            if (id == R.id.nav_dashboard) {
-                startActivity(new Intent(this, MainActivity.class));
-            }
-            else if (id == R.id.nav_map) {
+            if (id == R.id.nav_dashboard) return true;
+
+            else if (id == R.id.nav_map)
                 startActivity(new Intent(this, MapActivity.class));
-            }
-            else if (id == R.id.nav_stats) {
+
+            else if (id == R.id.nav_stats)
                 startActivity(new Intent(this, StatsActivity.class));
-            }
-            else if (id == R.id.nav_performance) {
+
+            else if (id == R.id.nav_performance)
                 startActivity(new Intent(this, PerformanceActivity.class));
-            }
 
             drawerLayout.closeDrawers();
+            return true;
+        });
+
+        // 🔥 BOTTOM NAVIGATION (FIXED)
+        BottomNavigationView bottomNav = findViewById(R.id.bottomNavigation);
+
+        // highlight current tab
+        bottomNav.setSelectedItemId(R.id.nav_dashboard);
+
+        // 🔥 DEBUG TEST (REMOVE LATER)
+        // bottomNav.setBackgroundColor(0xFFFF0000);
+
+        bottomNav.setOnItemSelectedListener(item -> {
+
+            int id = item.getItemId();
+
+            if (id == R.id.nav_dashboard) return true;
+
+            else if (id == R.id.nav_map)
+                startActivity(new Intent(this, MapActivity.class));
+
+            else if (id == R.id.nav_stats)
+                startActivity(new Intent(this, StatsActivity.class));
+
+            else if (id == R.id.nav_performance)
+                startActivity(new Intent(this, PerformanceActivity.class));
+
             return true;
         });
     }
@@ -143,7 +169,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         double magnitude = Math.sqrt(x * x + y * y + z * z);
 
-        // 🔄 ALWAYS update UI
         dataText.setText(
                 "X: " + x +
                         "\nY: " + y +
@@ -191,15 +216,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         databaseRef.push().setValue(data);
 
                     }).start();
-
-                    dataText.setText(
-                            "X: " + x +
-                                    "\nY: " + y +
-                                    "\nZ: " + z +
-                                    "\nMagnitude: " + magnitude +
-                                    "\nLat: " + lat +
-                                    "\nLng: " + lng
-                    );
 
                 } else {
                     dataText.setText("Location not available...");
