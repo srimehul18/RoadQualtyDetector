@@ -166,9 +166,13 @@ public class MapActivity extends AppCompatActivity {
                     if (mag >= 16) {
                         marker.setTitle("🔴 Dangerous pothole");
                         icon = ContextCompat.getDrawable(MapActivity.this, R.drawable.marker_red);
-                    } else {
-                        marker.setTitle("🟡 Moderate bump");
+                    }
+                    else if (mag >= 13.3) {
+                        marker.setTitle("🟠 Dangerous bump");
                         icon = ContextCompat.getDrawable(MapActivity.this, R.drawable.marker_yellow);
+                    }
+                    else {
+                        continue; // ignore small noise
                     }
 
                     marker.setIcon(resizeDrawable(icon, 80, 80));
