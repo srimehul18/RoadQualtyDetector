@@ -354,7 +354,13 @@ public class PerformanceActivity extends AppCompatActivity {
             card.addView(content);
 
             container.addView(card);
+            card.setOnClickListener(v -> {
+                Intent intent = new Intent(this, RoadDetailActivity.class);
+                intent.putExtra("roadName", road);
+                startActivity(intent);
+            });
         }
+
 
         if (container.getChildCount() == 0) {
             TextView empty = new TextView(this);
