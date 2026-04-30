@@ -23,6 +23,14 @@ import java.util.HashSet;
 import android.view.View;
 import android.content.Intent;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.core.view.GravityCompat;
+
+import com.google.android.material.navigation.NavigationView;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+
+import android.content.Intent;
+import android.view.Gravity; // only if you still use Gravity.LEFT somewhere
 
 public class PerformanceActivity extends AppCompatActivity {
 
@@ -31,12 +39,12 @@ public class PerformanceActivity extends AppCompatActivity {
 
     private String currentFilter = "All";
     private String searchQuery = "";
-
-    // 🔥 SORT MODE
-    private String currentSort = "WORST"; // default same as before
+    private String currentSort = "WORST";
 
     private HashMap<String, ArrayList<Double>> todayData = new HashMap<>();
     private HashMap<String, ArrayList<Double>> yesterdayData = new HashMap<>();
+
+
 
     private double getAverage(ArrayList<Double> list) {
         if (list == null || list.size() == 0) return 0;
@@ -45,6 +53,8 @@ public class PerformanceActivity extends AppCompatActivity {
         return sum / list.size();
     }
 
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,28 +62,82 @@ public class PerformanceActivity extends AppCompatActivity {
 
         container = findViewById(R.id.performanceContainer);
 
+
+        // 🔹 Drawer
         DrawerLayout drawerLayout = findViewById(R.id.drawer_layout_stats);
         NavigationView navView = findViewById(R.id.nav_view_stats);
         Button menuBtn = findViewById(R.id.menuBtnStats);
 
+// ✅ Correct selected item
+        navView.setCheckedItem(R.id.nav_performance);
+
+// Open drawer
+        menuBtn.setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.START));
+
+// Drawer navigation
+        navView.setNavigationItemSelectedListener(item -> {
+
+            int id = item.getItemId();
+
+            if (id == R.id.nav_dashboard) {
+                startActivity(new Intent(this, MainActivity.class));
+            }
+            else if (id == R.id.nav_map) {
+                startActivity(new Intent(this, MapActivity.class));
+            }
+            else if (id == R.id.nav_stats) {
+                startActivity(new Intent(this, StatsActivity.class));
+            }
+            else if (id == R.id.nav_performance) {
+                return true; // already here
+            }
+
+            drawerLayout.closeDrawers();
+            return true;
+        });
+
         navView.setCheckedItem(R.id.nav_performance);
         menuBtn.setOnClickListener(v -> drawerLayout.openDrawer(Gravity.LEFT));
+
+        BottomNavigationView bottomNav = findViewById(R.id.bottomNavigation);
+
+        bottomNav.setSelectedItemId(R.id.nav_performance);
+
+        bottomNav.setOnItemSelectedListener(item -> {
+
+            int id = item.getItemId();
+
+            if (id == R.id.nav_dashboard) {
+                startActivity(new Intent(this, MainActivity.class));
+            }
+            else if (id == R.id.nav_map) {
+                startActivity(new Intent(this, MapActivity.class));
+            }
+            else if (id == R.id.nav_stats) {
+                startActivity(new Intent(this, StatsActivity.class));
+            }
+            else if (id == R.id.nav_performance) {
+                return true;
+            }
+
+            return true;
+        });
+
+
 
         // 🔍 SEARCH
         EditText searchBar = findViewById(R.id.searchBar);
         searchBar.addTextChangedListener(new android.text.TextWatcher() {
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             public void afterTextChanged(android.text.Editable s) {}
-
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 searchQuery = s.toString().toLowerCase();
                 renderUI();
             }
         });
 
-        // 🔽 SORT DROPDOWN (ONLY ADDITION)
+        // 🔽 SORT
         Spinner sortSpinner = findViewById(R.id.sortSpinner);
-
         String[] options = {"Worst", "Recent", "A-Z"};
 
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
@@ -81,61 +145,46 @@ public class PerformanceActivity extends AppCompatActivity {
                 R.layout.spinner_item,
                 options
         );
-
         adapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
         sortSpinner.setAdapter(adapter);
 
         sortSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-
                 String selected = parent.getItemAtPosition(position).toString();
 
-                if (selected.equals("A-Z")) {
-                    currentSort = "ALPHA";
-                }
-                else if (selected.equals("Recent")) {
-                    currentSort = "RECENT";
-                }
-                else {
-                    currentSort = "WORST";
-                }
+                if (selected.equals("A-Z")) currentSort = "ALPHA";
+                else if (selected.equals("Recent")) currentSort = "RECENT";
+                else currentSort = "WORST";
 
                 renderUI();
             }
-
-            @Override
             public void onNothingSelected(AdapterView<?> parent) {}
         });
 
-        // FILTER BUTTONS
+        // FILTERS
         findViewById(R.id.filterAll).setOnClickListener(v -> { currentFilter = "All"; renderUI(); });
         findViewById(R.id.filterImproved).setOnClickListener(v -> { currentFilter = "Improved"; renderUI(); });
         findViewById(R.id.filterSame).setOnClickListener(v -> { currentFilter = "Same"; renderUI(); });
         findViewById(R.id.filterDegraded).setOnClickListener(v -> { currentFilter = "Degraded"; renderUI(); });
-
-        // NAVIGATION
-        navView.setNavigationItemSelectedListener(item -> {
-            int id = item.getItemId();
-
-            if (id == R.id.nav_dashboard)
-                startActivity(new Intent(this, MainActivity.class));
-            else if (id == R.id.nav_map)
-                startActivity(new Intent(this, MapActivity.class));
-            else if (id == R.id.nav_stats)
-                startActivity(new Intent(this, StatsActivity.class));
-
-            drawerLayout.closeDrawers();
-            return true;
+        findViewById(R.id.filterNew).setOnClickListener(v -> {
+            currentFilter = "New Data";
+            renderUI();
         });
 
-        BottomNavigationView bottomNav = findViewById(R.id.bottomNavigation);
-        bottomNav.setSelectedItemId(R.id.nav_performance);
+        findViewById(R.id.filterNoRecent).setOnClickListener(v -> {
+            currentFilter = "No Recent Data";
+            renderUI();
+        });
+
+
 
         databaseRef = FirebaseDatabase.getInstance().getReference("road_data_v2");
 
         loadData();
     }
+
+
 
     private void loadData() {
 
@@ -147,11 +196,11 @@ public class PerformanceActivity extends AppCompatActivity {
                 yesterdayData.clear();
 
                 long now = System.currentTimeMillis();
-
                 long oneDay = 24L * 60 * 60 * 1000;
 
-                long todayStart = now - oneDay;
-                long yesterdayStart = now - (2 * oneDay);
+                // 🔥 2-DAY WINDOW FIX
+                long currentStart = now - (2 * oneDay);
+                long previousStart = now - (4 * oneDay);
 
                 for (DataSnapshot data : snapshot.getChildren()) {
 
@@ -161,11 +210,11 @@ public class PerformanceActivity extends AppCompatActivity {
 
                     if (mag == null || road == null || time == null) continue;
 
-                    if (time >= todayStart) {
+                    if (time >= currentStart) {
                         todayData.putIfAbsent(road, new ArrayList<>());
                         todayData.get(road).add(mag);
                     }
-                    else if (time >= yesterdayStart) {
+                    else if (time >= previousStart) {
                         yesterdayData.putIfAbsent(road, new ArrayList<>());
                         yesterdayData.get(road).add(mag);
                     }
@@ -189,50 +238,66 @@ public class PerformanceActivity extends AppCompatActivity {
 
         ArrayList<String> roads = new ArrayList<>(allRoads);
 
-        // 🔥 SORTING (ONLY CHANGE)
+        // SORTING
         if (currentSort.equals("ALPHA")) {
-
             roads.sort(String::compareToIgnoreCase);
-
         } else if (currentSort.equals("RECENT")) {
-
-            roads.sort((a, b) -> {
-                double aVal = getAverage(todayData.get(a));
-                double bVal = getAverage(todayData.get(b));
-                return Double.compare(bVal, aVal);
-            });
-
-        } else { // WORST (your original)
-
-            roads.sort((a, b) -> {
-                double diffA = getAverage(todayData.get(a)) - getAverage(yesterdayData.get(a));
-                double diffB = getAverage(todayData.get(b)) - getAverage(yesterdayData.get(b));
-                return Double.compare(diffB, diffA);
-            });
+            roads.sort((a, b) ->
+                    Double.compare(getAverage(todayData.get(b)), getAverage(todayData.get(a)))
+            );
+        } else {
+            roads.sort((a, b) ->
+                    Double.compare(
+                            getAverage(todayData.get(b)) - getAverage(yesterdayData.get(b)),
+                            getAverage(todayData.get(a)) - getAverage(yesterdayData.get(a))
+                    )
+            );
         }
 
         for (String road : roads) {
 
             if (!road.toLowerCase().contains(searchQuery)) continue;
 
+            boolean hasCurrent = todayData.containsKey(road);
+            boolean hasPrevious = yesterdayData.containsKey(road);
+
             double todayAvg = getAverage(todayData.get(road));
             double yesterdayAvg = getAverage(yesterdayData.get(road));
 
-            double threshold = 0.5;
             String status;
             int color;
+            double threshold = 0.5;
 
-            if (todayAvg > yesterdayAvg + threshold) {
-                status = "Degraded";
-                color = 0xFFE53935;
-            }
-            else if (todayAvg < yesterdayAvg - threshold) {
-                status = "Improved";
-                color = 0xFF22C55E;
-            }
-            else {
-                status = "Same";
-                color = 0xFFFBBF24;
+            // 🔥 FIXED LOGIC
+            if (hasCurrent && hasPrevious) {
+
+                if (todayAvg > yesterdayAvg + threshold) {
+                    status = "Degraded";
+                    color = 0xFFE53935;
+                }
+                else if (todayAvg < yesterdayAvg - threshold) {
+                    status = "Improved";
+                    color = 0xFF22C55E;
+                }
+                else {
+                    status = "Same";
+                    color = 0xFFFBBF24;
+                }
+
+            } else if (hasPrevious && !hasCurrent) {
+
+                status = "No Recent Data";
+                color = 0xFF9CA3AF;
+
+            } else if (hasCurrent && !hasPrevious) {
+
+                status = "New Data";
+                color = 0xFF60A5FA;
+
+            } else {
+
+                status = "No Data";
+                color = 0xFF4B5563;
             }
 
             if (!currentFilter.equals("All") && !status.equals(currentFilter)) continue;
@@ -242,10 +307,9 @@ public class PerformanceActivity extends AppCompatActivity {
             card.setPadding(20, 20, 20, 20);
             card.setBackgroundResource(R.drawable.card_bg);
 
-            LinearLayout.LayoutParams params =
-                    new LinearLayout.LayoutParams(
-                            LinearLayout.LayoutParams.MATCH_PARENT,
-                            LinearLayout.LayoutParams.WRAP_CONTENT);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
             params.setMargins(0, 0, 0, 24);
             card.setLayoutParams(params);
 
@@ -264,8 +328,18 @@ public class PerformanceActivity extends AppCompatActivity {
             name.setTextSize(16f);
 
             TextView values = new TextView(this);
-            values.setText("Yesterday: " + String.format("%.2f", yesterdayAvg)
-                    + " → Today: " + String.format("%.2f", todayAvg));
+
+            if (hasCurrent && hasPrevious) {
+                values.setText("Prev: " + String.format("%.2f", yesterdayAvg)
+                        + " → Now: " + String.format("%.2f", todayAvg));
+            } else if (hasPrevious) {
+                values.setText("Prev: " + String.format("%.2f", yesterdayAvg) + " → No recent data");
+            } else if (hasCurrent) {
+                values.setText("New readings: " + String.format("%.2f", todayAvg));
+            } else {
+                values.setText("No data available");
+            }
+
             values.setTextColor(0xFF9CA3AF);
 
             TextView stat = new TextView(this);

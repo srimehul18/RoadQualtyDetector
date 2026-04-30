@@ -116,7 +116,25 @@
                             android:id="@+id/filterDegraded"
                             android:text="Degraded"
                             android:backgroundTint="#EF4444"
+                            android:layout_marginEnd="8dp"
                             android:textColor="#FFFFFF"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
+                        <Button
+                            android:id="@+id/filterNew"
+                            android:text="New"
+                            android:layout_marginEnd="8dp"
+                            android:textColor="#FFFFFF"
+                            android:backgroundTint="#60A5FA"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>/>
+
+                        <Button
+                            android:id="@+id/filterNoRecent"
+                            android:text="No Data"
+                            android:layout_marginEnd="8dp"
+                            android:textColor="#FFFFFF"
+                            android:backgroundTint="#9CA3AF"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"/>
                     </LinearLayout>
