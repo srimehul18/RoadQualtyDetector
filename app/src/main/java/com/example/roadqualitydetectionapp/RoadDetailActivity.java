@@ -1,7 +1,6 @@
 package com.example.roadqualitydetectionapp;
 
 import android.os.Bundle;
-import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -25,7 +24,6 @@ public class RoadDetailActivity extends AppCompatActivity {
         setContentView(R.layout.activity_road_detail);
 
         container = findViewById(R.id.detailContainer);
-
         roadName = getIntent().getStringExtra("roadName");
 
         databaseRef = FirebaseDatabase.getInstance().getReference("road_data_v2");
@@ -41,6 +39,13 @@ public class RoadDetailActivity extends AppCompatActivity {
 
                 container.removeAllViews();
 
+                double sum = 0;
+                double max = 0;
+                int count = 0;
+                long lastTime = 0;
+
+                String lastDate = "";
+
                 for (DataSnapshot data : snapshot.getChildren()) {
 
                     String road = data.child("road").getValue(String.class);
@@ -50,85 +55,114 @@ public class RoadDetailActivity extends AppCompatActivity {
                     if (road == null || mag == null || time == null) continue;
                     if (!road.equals(roadName)) continue;
 
-                    // 🔥 FORMAT TIME
-                    String date = new SimpleDateFormat("dd MMM, HH:mm", Locale.getDefault())
+                    // 📊 stats
+                    sum += mag;
+                    count++;
+                    if (mag > max) max = mag;
+                    if (time > lastTime) lastTime = time;
+
+                    // 📅 date grouping
+                    String dateOnly = new SimpleDateFormat("dd MMM", Locale.getDefault())
                             .format(new Date(time));
 
-                    // 🔥 MAIN ROW (BAR + CARD)
-                    LinearLayout row = new LinearLayout(RoadDetailActivity.this);
-                    row.setOrientation(LinearLayout.HORIZONTAL);
+                    if (!dateOnly.equals(lastDate)) {
+                        lastDate = dateOnly;
 
-                    LinearLayout.LayoutParams rowParams =
-                            new LinearLayout.LayoutParams(
-                                    LinearLayout.LayoutParams.MATCH_PARENT,
-                                    LinearLayout.LayoutParams.WRAP_CONTENT);
-                    rowParams.setMargins(0, 0, 0, 16);
-                    row.setLayoutParams(rowParams);
-
-                    // 🔴🟡🟢 COLOR BAR
-                    View bar = new View(RoadDetailActivity.this);
-
-                    LinearLayout.LayoutParams barParams =
-                            new LinearLayout.LayoutParams(12,
-                                    LinearLayout.LayoutParams.MATCH_PARENT);
-
-                    bar.setLayoutParams(barParams);
-
-                    int color;
-                    if (mag >= 16) {
-                        color = 0xFFE53935; // 🔴 Dangerous
-                    } else if (mag >= 13.3) {
-                        color = 0xFFFBBF24; // 🟡 Moderate
-                    } else {
-                        color = 0xFF22C55E; // 🟢 Smooth
+                        TextView dateHeader = new TextView(RoadDetailActivity.this);
+                        dateHeader.setText("📅 " + dateOnly);
+                        dateHeader.setTextColor(0xFFFFFFFF);
+                        dateHeader.setTextSize(16f);
+                        dateHeader.setPadding(20, 30, 20, 10);
+                        container.addView(dateHeader);
                     }
 
-                    bar.setBackgroundColor(color);
+                    // 🎨 color coding
+                    int color;
+                    if (mag > 15) color = 0xFFE53935;      // red
+                    else if (mag > 13) color = 0xFFFBBF24; // yellow
+                    else color = 0xFF22C55E;               // green
 
-                    // CARD CONTENT
+                    // 🧾 item card
                     LinearLayout item = new LinearLayout(RoadDetailActivity.this);
                     item.setOrientation(LinearLayout.VERTICAL);
                     item.setPadding(24, 20, 24, 20);
                     item.setBackgroundResource(R.drawable.card_bg);
 
-                    LinearLayout.LayoutParams itemParams =
+                    LinearLayout.LayoutParams params =
                             new LinearLayout.LayoutParams(
                                     LinearLayout.LayoutParams.MATCH_PARENT,
                                     LinearLayout.LayoutParams.WRAP_CONTENT);
-                    itemParams.setMargins(16, 0, 0, 0);
-                    item.setLayoutParams(itemParams);
+                    params.setMargins(0, 0, 0, 16);
+                    item.setLayoutParams(params);
 
-                    // 🔹 MAG TEXT
+                    String fullTime = new SimpleDateFormat("dd MMM, HH:mm", Locale.getDefault())
+                            .format(new Date(time));
+
                     TextView magText = new TextView(RoadDetailActivity.this);
-                    magText.setText("Magnitude: " + String.format(Locale.getDefault(), "%.2f", mag));
-                    magText.setTextColor(0xFFFFFFFF);
+                    magText.setText("Magnitude: " + String.format("%.2f", mag));
+                    magText.setTextColor(color);
                     magText.setTextSize(15f);
 
-                    // 🔹 TIME TEXT
                     TextView timeText = new TextView(RoadDetailActivity.this);
-                    timeText.setText(date);
+                    timeText.setText(fullTime);
                     timeText.setTextColor(0xFF9CA3AF);
                     timeText.setTextSize(13f);
 
-                    // ADD TEXT
                     item.addView(magText);
                     item.addView(timeText);
 
-                    // ADD BAR + CARD
-                    row.addView(bar);
-                    row.addView(item);
-
-                    // ADD TO SCREEN
-                    container.addView(row);
+                    container.addView(item);
                 }
 
-                // 🟡 EMPTY STATE
-                if (container.getChildCount() == 0) {
-                    TextView empty = new TextView(RoadDetailActivity.this);
-                    empty.setText("No data available");
-                    empty.setTextColor(0xFF9CA3AF);
-                    empty.setPadding(24, 24, 24, 24);
-                    container.addView(empty);
+                // 🧾 SUMMARY + INSIGHT
+                if (count > 0) {
+
+                    double avg = sum / count;
+
+                    String lastSeen = new SimpleDateFormat("dd MMM, HH:mm", Locale.getDefault())
+                            .format(new Date(lastTime));
+
+                    // Summary card
+                    LinearLayout summary = new LinearLayout(RoadDetailActivity.this);
+                    summary.setOrientation(LinearLayout.VERTICAL);
+                    summary.setPadding(30, 30, 30, 30);
+                    summary.setBackgroundResource(R.drawable.card_bg);
+
+                    LinearLayout.LayoutParams params =
+                            new LinearLayout.LayoutParams(
+                                    LinearLayout.LayoutParams.MATCH_PARENT,
+                                    LinearLayout.LayoutParams.WRAP_CONTENT);
+                    params.setMargins(0, 0, 0, 24);
+                    summary.setLayoutParams(params);
+
+                    TextView stats = new TextView(RoadDetailActivity.this);
+                    stats.setText("Avg: " + String.format("%.2f", avg)
+                            + "   |   Max: " + String.format("%.2f", max)
+                            + "\nReadings: " + count
+                            + "   |   Last: " + lastSeen);
+                    stats.setTextColor(0xFFFFFFFF);
+                    stats.setTextSize(15f);
+
+                    // 🧠 Insight
+                    String insight;
+                    if (avg > 15)
+                        insight = "⚠️ Road condition is poor (high vibrations)";
+                    else if (avg > 13)
+                        insight = "⚠️ Moderate road quality";
+                    else
+                        insight = "✅ Road is smooth and stable";
+
+                    TextView insightText = new TextView(RoadDetailActivity.this);
+                    insightText.setText(insight);
+                    insightText.setTextColor(0xFF60A5FA);
+                    insightText.setTextSize(14f);
+                    insightText.setPadding(0, 10, 0, 0);
+
+                    summary.addView(stats);
+                    summary.addView(insightText);
+
+                    // 🔥 add summary at TOP
+                    container.addView(summary, 0);
                 }
             }
 
