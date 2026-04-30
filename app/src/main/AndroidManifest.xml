@@ -10,7 +10,14 @@
     <application
         android:allowBackup="true"
         android:label="@string/app_name"
-        android:theme="@style/Theme.RoadQualityDetectionApp">
+        android:theme="@style/Theme.RoadQualityDetectionApp"
+
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+
+        android:supportsRtl="true"
+        >
+
         <activity
             android:name=".RoadDetailActivity"
             android:exported="true" />
@@ -33,3 +40,4 @@
     </application>
 
 </manifest>
+
